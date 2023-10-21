@@ -94,4 +94,17 @@ export function setupBot(bot: Telegraf) {
 
         return ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, text, { disable_web_page_preview: matches.length !== 1 });
     }));
+
+    bot.on(message("text"), Composer.privateChat(async (ctx) => {
+        const message = await ctx.reply("Processing...", { reply_to_message_id: ctx.message?.message_id });
+        const dataResponse = await fetch(DATA_URL);
+        const data: {id: number, text: string, ocr?: string}[] = await dataResponse.json();
+        const fuse = new Fuse(data, {includeScore: true, keys: ["text", "ocr"]});
+        const matches = fuse.search(ctx.message.text).slice(0, 5);
+        if (!matches.length) {
+            return ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, `No matches found.`);
+        }
+        const text = matches.map(m => `https://t.me/${CHANNEL}/${m.item.id}\nConfidence: ${((1 - (m.score ?? 1)) * 100).toFixed(2)}%`).join("\n\n");
+        return ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, text, { disable_web_page_preview: matches.length !== 1 });
+    }));
 }
