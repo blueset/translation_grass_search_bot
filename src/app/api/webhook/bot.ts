@@ -81,7 +81,7 @@ export function setupBot(bot: Telegraf) {
         const outcome = result.analyzeResult.readResults.map(r => r.lines.map(l => l.text).join("\n")).join("\n");
         // console.log("Outcome", outcome);
 
-        const fuse = new Fuse(data, {includeScore: true, keys: ["text", "ocr"]});
+        const fuse = new Fuse(data, {includeScore: true, keys: ["text", "ocr"], ignoreFieldNorm: true});
 
         const matches = fuse.search(outcome).slice(0, 5);
         // console.log("Matches", matches);
@@ -99,7 +99,7 @@ export function setupBot(bot: Telegraf) {
         const message = await ctx.reply("Processing...", { reply_to_message_id: ctx.message?.message_id });
         const dataResponse = await fetch(DATA_URL);
         const data: {id: number, text: string, ocr?: string}[] = await dataResponse.json();
-        const fuse = new Fuse(data, {includeScore: true, keys: ["text", "ocr"]});
+        const fuse = new Fuse(data, {includeScore: true, keys: ["text", "ocr"], ignoreFieldNorm: true});
         const matches = fuse.search(ctx.message.text).slice(0, 5);
         if (!matches.length) {
             return ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, `No matches found.`);
